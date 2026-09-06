@@ -248,19 +248,27 @@ app.get('/api/skills', (req, res) => {
     });
 });
 
-app.post('/api/skills', (req, res) => {
-    const { skill_name, proficiency, category } = req.body;
-    const sql = "INSERT INTO skills (skill_name, proficiency, category) VALUES (?, ?, ?)";
-    db.query(sql, [skill_name, proficiency, category], (err, result) => {
+app.post('/api/skills', upload.single('image'), (req, res) => {
+    const { name, main_category, sub_category, proficiency_text, proficiency_percentage } = req.body;
+    const skill_logo_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const sql = "INSERT INTO skills (name, main_category, sub_category, proficiency_text, proficiency_percentage, skill_logo_url) VALUES (?, ?, ?, ?, ?, ?)";
+    db.query(sql, [name, main_category, sub_category, proficiency_text, proficiency_percentage || null, skill_logo_url], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Skill added!", id: result.insertId });
+        res.json({ message: "Skill added!", id: result.insertId, skill_logo_url });
     });
 });
 
-app.put('/api/skills/:id', (req, res) => {
-    const { skill_name, proficiency, category } = req.body;
-    const sql = "UPDATE skills SET skill_name=?, proficiency=?, category=? WHERE id=?";
-    db.query(sql, [skill_name, proficiency, category, req.params.id], (err, result) => {
+app.put('/api/skills/:id', upload.single('image'), (req, res) => {
+    const { name, main_category, sub_category, proficiency_text, proficiency_percentage } = req.body;
+    let sql = "UPDATE skills SET name=?, main_category=?, sub_category=?, proficiency_text=?, proficiency_percentage=? WHERE id=?";
+    let params = [name, main_category, sub_category, proficiency_text, proficiency_percentage || null, req.params.id];
+    
+    if (req.file) {
+        sql = "UPDATE skills SET name=?, main_category=?, sub_category=?, proficiency_text=?, proficiency_percentage=?, skill_logo_url=? WHERE id=?";
+        params = [name, main_category, sub_category, proficiency_text, proficiency_percentage || null, `/uploads/${req.file.filename}`, req.params.id];
+    }
+    
+    db.query(sql, params, (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: "Skill updated successfully!" });
     });

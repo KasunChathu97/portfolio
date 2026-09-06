@@ -2,6 +2,65 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProjectCard from '../components/ProjectCard';
 
+const SoftSkillCard = ({ skill, index }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [currentCount, setCurrentCount] = useState(0);
+  const targetCount = skill.proficiency_percentage || 0;
+
+  const colorClasses = [
+    { text: 'text-cyan-400', border: 'border-cyan-500/10', hoverBorder: 'hover:border-cyan-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(6,182,212,0.3)]' },
+    { text: 'text-indigo-400', border: 'border-indigo-500/10', hoverBorder: 'hover:border-indigo-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(99,102,241,0.3)]' },
+    { text: 'text-emerald-400', border: 'border-emerald-500/10', hoverBorder: 'hover:border-emerald-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(16,185,129,0.3)]' },
+    { text: 'text-rose-400', border: 'border-rose-500/10', hoverBorder: 'hover:border-rose-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(244,63,94,0.3)]' },
+    { text: 'text-violet-400', border: 'border-violet-500/10', hoverBorder: 'hover:border-violet-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(139,92,246,0.3)]' },
+  ];
+  const color = colorClasses[index % colorClasses.length];
+
+  useEffect(() => {
+    let interval;
+    if (isHovered) {
+      setCurrentCount(0);
+      interval = setInterval(() => {
+        setCurrentCount(prev => {
+          if (prev >= targetCount) {
+            clearInterval(interval);
+            return targetCount;
+          }
+          return prev + 1;
+        });
+      }, 10);
+    } else {
+      setCurrentCount(targetCount);
+    }
+    return () => clearInterval(interval);
+  }, [isHovered, targetCount]);
+
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (currentCount / 100) * circumference;
+
+  return (
+    <div 
+      onMouseEnter={() => setIsHovered(true)} 
+      onMouseLeave={() => setIsHovered(false)}
+      className={`flex flex-col items-center justify-center p-4 bg-white/5 rounded-2xl border ${color.border} ${color.hoverBorder} hover:-translate-y-1 ${color.cardShadow} transition-all duration-300 cursor-default h-full w-full`}
+    >
+       <div className="relative w-24 h-24 flex items-center justify-center">
+         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+           <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="6" className="text-slate-800" />
+           <circle 
+             cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="6" 
+             className={`${color.text} ${isHovered ? color.shadow : ''} transition-all duration-75 ease-out`} 
+             strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" 
+           />
+         </svg>
+         <span className="absolute text-lg font-bold text-white">{currentCount}%</span>
+       </div>
+       <span className="mt-4 text-slate-200 font-semibold text-center">{skill.name}</span>
+    </div>
+  );
+};
+
 function Home() {
   const [profile, setProfile] = useState({});
   const [skills, setSkills] = useState([]);
@@ -44,6 +103,18 @@ function Home() {
     return url.startsWith('http') ? url : `http://localhost:5000${url}`;
   };
 
+  const softSkills = skills.filter(s => s.main_category === 'Soft Skills').sort((a, b) => (b.proficiency_percentage || 0) - (a.proficiency_percentage || 0));
+  const languageSkills = skills.filter(s => s.main_category === 'Languages');
+  const techSkills = skills.filter(s => s.main_category === 'Technical Skills');
+
+  
+  const techSkillsGrouped = techSkills.reduce((acc, skill) => {
+    const groupName = skill.name || 'Other';
+    if (!acc[groupName]) acc[groupName] = [];
+    acc[groupName].push(skill);
+    return acc;
+  }, {});
+
   return (
     <div className="w-full font-sans pt-20">
       
@@ -83,34 +154,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Skills Section */}
-      {skills.length > 0 && (
-        <div id="skills" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
-          <div className="container mx-auto px-4 max-w-5xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Skills</span></h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full"></div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {skills.map(skill => (
-                <div key={skill.id} className="bg-white/5 p-6 rounded-2xl border border-white/10">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-lg font-bold text-white">{skill.skill_name}</span>
-                    <span className="text-emerald-400 font-semibold">{skill.proficiency || skill.category || 0}%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-3 rounded-full" 
-                      style={{ width: `${skill.proficiency || skill.category || 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Working Experience Section */}
       <div id="experience" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
@@ -275,6 +319,91 @@ function Home() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skills Section */}
+      {skills.length > 0 && (
+        <div id="skills" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Skills</span></h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full"></div>
+            </div>
+            
+            <div className="flex flex-col gap-16">
+              
+              {/* Technical Skills */}
+              {Object.keys(techSkillsGrouped).length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-8 text-center">Technical <span className="text-emerald-400">Skills</span></h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {Object.entries(techSkillsGrouped).map(([categoryName, items]) => (
+                      <div key={categoryName} className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-2xl flex flex-col hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20 hover:border-emerald-500/50 transition-all duration-300">
+                        <h4 className="text-xl font-bold text-white mb-8 border-b border-white/10 pb-4 text-center">
+                          {categoryName}
+                        </h4>
+                        <div className="flex flex-wrap justify-center gap-4 mt-auto">
+                          {items.map(skill => (
+                            <div key={skill.id} className="flex flex-col items-center gap-3 bg-slate-800/30 text-slate-300 border border-slate-700/50 px-4 py-4 rounded-xl text-sm font-semibold hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30 hover:-translate-y-1 transition-all duration-300 min-w-[90px]">
+                              {skill.skill_logo_url ? (
+                                <img src={getImageUrl(skill.skill_logo_url)} alt={skill.sub_category} className="w-8 h-8 object-contain drop-shadow-md" />
+                              ) : (
+                                <div className="w-8 h-8 bg-slate-700/50 rounded-full flex items-center justify-center text-xs">💻</div>
+                              )}
+                              <span>{skill.sub_category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Soft Skills */}
+              {softSkills.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-8 text-center">Soft <span className="text-cyan-400">Skills</span></h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                    {softSkills.map((skill, index) => (
+                      <SoftSkillCard key={skill.id} skill={skill} index={index} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Languages */}
+              {languageSkills.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-8 text-center">Language <span className="text-cyan-400">Skills</span></h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                    {languageSkills.map(skill => (
+                      <div key={skill.id} className="relative overflow-hidden flex items-center justify-between p-5 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/10 hover:border-cyan-500/30 transition-all duration-300 group">
+                         <div className="flex flex-col z-10 w-full pr-4">
+                           <span className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{skill.name}</span>
+                           <div className="h-0.5 bg-cyan-500/50 w-0 group-hover:w-full transition-all duration-500 ease-out mt-1.5 rounded-full"></div>
+                         </div>
+                         {skill.proficiency_text && (
+                           <div className="flex flex-shrink-0 items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 shadow-inner group-hover:border-cyan-500/30 transition-colors z-10 whitespace-nowrap">
+                             <span className="relative flex h-2 w-2">
+                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                             </span>
+                             <span className="text-xs font-bold text-cyan-400 tracking-wide uppercase">
+                               {skill.proficiency_text}
+                             </span>
+                           </div>
+                         )}
+                         <div className="absolute -inset-full bg-gradient-to-r from-transparent via-cyan-500/5 to-transparent group-hover:animate-pulse transition-all duration-1000 z-0"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

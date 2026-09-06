@@ -33,8 +33,9 @@ function Navbar() {
         <div className="space-x-8 hidden md:flex items-center font-medium">
           <a href="#experience" onClick={(e) => handleAnchorClick(e, 'experience')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Experience</a>
           <a href="#education" onClick={(e) => handleAnchorClick(e, 'education')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Education</a>
-          <a href="#projects" onClick={(e) => handleAnchorClick(e, 'projects')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Projects</a>
           <a href="#certifications" onClick={(e) => handleAnchorClick(e, 'certifications')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Certifications</a>
+          <a href="#skills" onClick={(e) => handleAnchorClick(e, 'skills')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Skills</a>
+          <a href="#projects" onClick={(e) => handleAnchorClick(e, 'projects')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Projects</a>
           <a href="#contact" onClick={(e) => handleAnchorClick(e, 'contact')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Contact</a>
           <Link to="/admin" className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all hover:-translate-y-0.5">
             Admin Panel

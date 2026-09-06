@@ -32,7 +32,9 @@ function AdminDashboard() {
 
   // Skills State
   const [skills, setSkills] = useState([]);
-  const [skillData, setSkillData] = useState({ id: null, skill_name: '', proficiency: '', category: '' });
+  const [skillData, setSkillData] = useState({ id: null, name: '', main_category: 'Technical Skills', sub_category: '', proficiency_text: '', proficiency_percentage: '', skill_logo_url: '' });
+  const [skillImage, setSkillImage] = useState(null);
+  const [skillFilter, setSkillFilter] = useState('All');
 
   const navigate = useNavigate();
 
@@ -40,6 +42,7 @@ function AdminDashboard() {
   const [showAddEducation, setShowAddEducation] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddCertification, setShowAddCertification] = useState(false);
+  const [showAddSkill, setShowAddSkill] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -165,12 +168,22 @@ function AdminDashboard() {
 
   const handleSkillSubmit = (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    Object.keys(skillData).forEach(key => {
+      if (skillData[key] !== null && skillData[key] !== '') {
+        formData.append(key, skillData[key]);
+      }
+    });
+    if (skillImage) formData.append('image', skillImage);
+
     const req = skillData.id 
-      ? axios.put(`http://localhost:5000/api/skills/${skillData.id}`, skillData)
-      : axios.post('http://localhost:5000/api/skills', skillData);
+      ? axios.put(`http://localhost:5000/api/skills/${skillData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      : axios.post('http://localhost:5000/api/skills', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     
     req.then(() => {
-      setSkillData({ id: null, skill_name: '', proficiency: '', category: '' });
+      setSkillData({ id: null, name: '', main_category: 'Technical Skills', sub_category: '', proficiency_text: '', proficiency_percentage: '', skill_logo_url: '' });
+      setSkillImage(null);
+      setShowAddSkill(false);
       fetchSkills();
     }).catch(console.error);
   };
@@ -661,35 +674,106 @@ function AdminDashboard() {
 
           {/* SKILLS TAB */}
           {activeTab === 'skills' && (
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-2 bg-white/5 border border-white/10 p-6 rounded-2xl">
-                <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4">{skillData.id ? 'Edit Skill' : 'Add Skill'}</h2>
-                <form onSubmit={handleSkillSubmit} className="space-y-4">
-                  <input type="text" placeholder="Skill Name" value={skillData.skill_name} onChange={e => setSkillData({...skillData, skill_name: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" required />
-                  <input type="number" placeholder="Proficiency (0-100)" min="0" max="100" value={skillData.proficiency} onChange={e => setSkillData({...skillData, proficiency: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" required />
-                  <input type="text" placeholder="Category (e.g. Frontend)" value={skillData.category || ''} onChange={e => setSkillData({...skillData, category: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" />
-                  <div className="flex space-x-4 pt-2">
-                    <button type="submit" className="bg-emerald-500 px-4 py-2 rounded-lg font-bold flex-1">{skillData.id ? 'Update' : 'Add'}</button>
-                    {skillData.id && <button type="button" onClick={() => setSkillData({id:null, skill_name:'', proficiency:'', category:''})} className="bg-slate-700 px-4 py-2 rounded-lg">Cancel</button>}
-                  </div>
-                </form>
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white/5 border border-white/10 p-6 rounded-2xl gap-4">
+                 <h2 className="text-2xl font-bold">Manage Skills</h2>
+                 <button onClick={() => setShowAddSkill(!showAddSkill)} className="bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-2 rounded-lg font-bold transition w-full md:w-auto">
+                   {showAddSkill ? 'Close Form' : '+ Add Skill'}
+                 </button>
               </div>
+
+              {showAddSkill && (
+                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl animate-fade-in">
+                  <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4">{skillData.id ? 'Edit Skill' : 'Add New Skill'}</h2>
+                  <form onSubmit={handleSkillSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">Main Category</label>
+                      <select value={skillData.main_category} onChange={e => setSkillData({...skillData, main_category: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required>
+                        <option value="Soft Skills">Soft Skills</option>
+                        <option value="Languages">Languages</option>
+                        <option value="Technical Skills">Technical Skills</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">
+                        {skillData.main_category === 'Soft Skills' ? 'Soft Skill Name' : (skillData.main_category === 'Languages' ? 'Language' : 'Technical Skill Category (e.g., Frontend Development)')}
+                      </label>
+                      <input type="text" placeholder={skillData.main_category === 'Technical Skills' ? 'Frontend Development' : 'e.g., Reactjs, Teamwork, English'} value={skillData.name} onChange={e => setSkillData({...skillData, name: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required />
+                    </div>
+
+                    {skillData.main_category === 'Soft Skills' && (
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Proficiency Percentage (0 - 100)</label>
+                        <input type="number" min="0" max="100" placeholder="85" value={skillData.proficiency_percentage || ''} onChange={e => setSkillData({...skillData, proficiency_percentage: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" />
+                      </div>
+                    )}
+
+                    {skillData.main_category === 'Languages' && (
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Proficiency Level</label>
+                        <select value={skillData.proficiency_text || ''} onChange={e => setSkillData({...skillData, proficiency_text: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white">
+                          <option value="">Select Level</option>
+                          <option value="Basic">Basic</option>
+                          <option value="Conversational">Conversational</option>
+                          <option value="Fluent">Fluent</option>
+                          <option value="Native / Bilingual">Native / Bilingual</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {skillData.main_category === 'Technical Skills' && (
+                      <>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Skill Item (e.g., Reactjs, Bootstrap)</label>
+                          <input type="text" placeholder="Reactjs" value={skillData.sub_category || ''} onChange={e => setSkillData({...skillData, sub_category: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Skill Item Logo / Icon</label>
+                          <input type="file" onChange={e => setSkillImage(e.target.files[0])} className="w-full bg-slate-800 border border-slate-700 p-2 rounded-lg text-sm text-slate-300" accept="image/*" />
+                        </div>
+                      </>
+                    )}
+                    <div className="flex space-x-4 pt-2">
+                      <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 transition text-white px-4 py-2 rounded-lg font-bold flex-1">{skillData.id ? 'Update' : 'Add'}</button>
+                      {skillData.id && <button type="button" onClick={() => {setSkillData({id:null, name:'', main_category:'Technical Skills', sub_category:''}); setShowAddSkill(false);}} className="bg-slate-700 hover:bg-slate-600 transition text-white px-4 py-2 rounded-lg">Cancel</button>}
+                    </div>
+                  </form>
+                </div>
+              )}
               
-              <div className="lg:col-span-3 bg-white/5 border border-white/10 p-6 rounded-2xl">
-                <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4">Manage Skills</h2>
+              <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                  <h3 className="text-xl font-bold text-white">Manage Skills</h3>
+                  <select 
+                    value={skillFilter} 
+                    onChange={e => setSkillFilter(e.target.value)} 
+                    className="bg-slate-800 border border-slate-700 p-2 rounded-lg text-sm text-slate-300 outline-none focus:border-emerald-500"
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="Soft Skills">Soft Skills</option>
+                    <option value="Languages">Languages</option>
+                    <option value="Technical Skills">Technical Skills</option>
+                  </select>
+                </div>
                 <div className="space-y-3 overflow-y-auto max-h-[600px] pr-2">
-                  {skills.map(s => (
+                  {(skillFilter === 'All' ? skills : skills.filter(s => s.main_category === skillFilter)).map(s => (
                     <div key={s.id} className="bg-slate-800/50 p-4 rounded-xl flex justify-between items-center border border-slate-700 hover:border-emerald-500/50 transition">
                       <div>
-                        <p className="font-bold text-white">{s.skill_name} <span className="text-xs bg-slate-700 px-2 rounded ml-2">{s.category}</span></p>
-                        <p className="text-sm text-emerald-400">{s.proficiency || 0}%</p>
+                        <p className="font-bold text-white text-lg">{s.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs px-2 py-1 rounded font-semibold ${s.main_category === 'Soft Skills' ? 'bg-cyan-500/20 text-cyan-400' : s.main_category === 'Languages' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                            {s.main_category}
+                          </span>
+                          {s.sub_category && <span className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">{s.sub_category}</span>}
+                        </div>
                       </div>
                       <div className="flex space-x-2">
-                        <button onClick={() => setSkillData(s)} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded">Edit</button>
-                        <button onClick={() => {if(window.confirm('Delete skill?')) axios.delete(`http://localhost:5000/api/skills/${s.id}`).then(fetchSkills)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded">Delete</button>
+                        <button onClick={() => { setSkillData(s); setShowAddSkill(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
+                        <button onClick={() => {if(window.confirm('Delete skill?')) axios.delete(`http://localhost:5000/api/skills/${s.id}`).then(fetchSkills)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                       </div>
                     </div>
                   ))}
+                  {(skillFilter === 'All' ? skills : skills.filter(s => s.main_category === skillFilter)).length === 0 && <p className="text-slate-400 text-center py-10">No skills found.</p>}
                 </div>
               </div>
             </div>
