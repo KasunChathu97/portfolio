@@ -22,8 +22,8 @@ function AdminDashboard() {
 
   // Projects State
   const [projects, setProjects] = useState([]);
-  const [projectData, setProjectData] = useState({ id: null, title: '', description: '', tech_stack: '', image_url: '', project_link: '' });
-  const [projectImage, setProjectImage] = useState(null);
+  const [projectData, setProjectData] = useState({ id: null, title: '', description: '', tech_stack: '', image_urls: '[]', github_link: '', live_link: '', project_type: 'Solo' });
+  const [projectImages, setProjectImages] = useState([]);
 
   // Certifications State
   const [certifications, setCertifications] = useState([]);
@@ -139,14 +139,27 @@ function AdminDashboard() {
 
   const handleProjectSubmit = (e) => {
     e.preventDefault();
-    const formData = createFormData(projectData, projectImage);
+    const formData = new FormData();
+    Object.keys(projectData).forEach(key => {
+      if (projectData[key] !== null && projectData[key] !== '') {
+        formData.append(key, projectData[key]);
+      }
+    });
+    
+    if (projectImages && projectImages.length > 0) {
+      projectImages.forEach(file => {
+        formData.append('project_images', file);
+      });
+    }
+
     const req = projectData.id 
-      ? axios.put(`http://localhost:5000/api/projects/${projectData.id}`, formData)
-      : axios.post('http://localhost:5000/api/projects', formData);
+      ? axios.put(`http://localhost:5000/api/projects/${projectData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      : axios.post('http://localhost:5000/api/projects', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       
     req.then(() => {
-        setProjectData({ id: null, title: '', description: '', tech_stack: '', image_url: '', project_link: '' });
-        setProjectImage(null);
+        setProjectData({ id: null, title: '', description: '', tech_stack: '', image_urls: '[]', github_link: '', live_link: '', project_type: 'Solo' });
+        setProjectImages([]);
+        setShowAddProject(false);
         fetchProjects();
     }).catch(console.error);
   };
@@ -190,12 +203,12 @@ function AdminDashboard() {
 
   const menuItems = [
     { id: 'profile', label: 'Profile Management', icon: '👤' },
-    { id: 'contact', label: 'Contact', icon: '📞' },
     { id: 'experience', label: 'Experience', icon: '💼' },
     { id: 'education', label: 'Education', icon: '🎓' },
-    { id: 'projects', label: 'Projects', icon: '🚀' },
     { id: 'certifications', label: 'Certifications', icon: '📜' },
-    { id: 'skills', label: 'Skills', icon: '⭐' }
+    { id: 'skills', label: 'Skills', icon: '⭐' },
+    { id: 'projects', label: 'Projects', icon: '🚀' },
+    { id: 'contact', label: 'Contact', icon: '📞' }
   ];
 
   const [isEditingContact, setIsEditingContact] = useState(false);
@@ -570,17 +583,22 @@ function AdminDashboard() {
                 <div className="bg-white/5 border border-white/10 p-6 rounded-2xl animate-fade-in">
                    <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4">{projectData.id ? 'Edit Project' : 'Add New Project'}</h2>
                    <form onSubmit={handleProjectSubmit} className="space-y-4">
-                     <input type="text" placeholder="Title" value={projectData.title} onChange={e => setProjectData({...projectData, title: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" required />
-                     <textarea placeholder="Description" value={projectData.description} onChange={e => setProjectData({...projectData, description: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" rows="3" required></textarea>
-                     <input type="text" placeholder="Tech Stack" value={projectData.tech_stack} onChange={e => setProjectData({...projectData, tech_stack: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" required />
-                     <input type="text" placeholder="Project Link" value={projectData.project_link} onChange={e => setProjectData({...projectData, project_link: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg" />
+                     <input type="text" placeholder="Project Title" value={projectData.title} onChange={e => setProjectData({...projectData, title: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required />
+                     <textarea placeholder="Description/Highlights" value={projectData.description} onChange={e => setProjectData({...projectData, description: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" rows="3" required></textarea>
+                     <input type="text" placeholder="Tech Stack (comma-separated, e.g., PHP, MySQL, Bootstrap)" value={projectData.tech_stack} onChange={e => setProjectData({...projectData, tech_stack: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required />
+                     <input type="url" placeholder="GitHub Link" value={projectData.github_link || ''} onChange={e => setProjectData({...projectData, github_link: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required />
+                     <input type="url" placeholder="Live Project Link (optional)" value={projectData.live_link || ''} onChange={e => setProjectData({...projectData, live_link: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" />
+                     <select value={projectData.project_type || 'Solo'} onChange={e => setProjectData({...projectData, project_type: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-lg text-white" required>
+                       <option value="Solo">Solo Project</option>
+                       <option value="Group">Group Project</option>
+                     </select>
                      <div>
-                       <label className="text-xs text-slate-400 block mb-1">Project Image</label>
-                       <input type="file" onChange={e => setProjectImage(e.target.files[0])} className="w-full bg-slate-800 border border-slate-700 p-2 rounded-lg text-sm" accept="image/*" />
+                       <label className="text-xs text-slate-400 block mb-1">Project Images (Up to 4)</label>
+                       <input type="file" multiple accept="image/*" max="4" onChange={e => setProjectImages(Array.from(e.target.files))} className="w-full bg-slate-800 border border-slate-700 p-2 rounded-lg text-sm text-slate-300" />
                      </div>
                      <div className="flex space-x-4 pt-2">
-                       <button type="submit" className="bg-emerald-500 px-4 py-2 rounded-lg font-bold flex-1">{projectData.id ? 'Update' : 'Publish'}</button>
-                       {projectData.id && <button type="button" onClick={() => {setProjectData({id:null, title:'', description:'', tech_stack:'', image_url:'', project_link:''}); setProjectImage(null); setShowAddProject(false);}} className="bg-slate-700 px-4 py-2 rounded-lg">Cancel</button>}
+                       <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 transition text-white px-4 py-2 rounded-lg font-bold flex-1">{projectData.id ? 'Update Project' : 'Publish Project'}</button>
+                       {projectData.id && <button type="button" onClick={() => {setProjectData({id:null, title:'', description:'', tech_stack:'', image_urls:'[]', github_link:'', live_link:'', project_type:'Solo'}); setProjectImages([]); setShowAddProject(false);}} className="bg-slate-700 hover:bg-slate-600 transition text-white px-4 py-2 rounded-lg">Cancel</button>}
                      </div>
                    </form>
                 </div>
@@ -588,11 +606,19 @@ function AdminDashboard() {
               
               <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
                  <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2">
-                   {projects.map(p => (
+                   {projects.map(p => {
+                     let firstImage = null;
+                     try {
+                       const parsed = JSON.parse(p.image_urls);
+                       if (Array.isArray(parsed) && parsed.length > 0) firstImage = parsed[0];
+                     } catch(e) {
+                       firstImage = p.image_urls; // Fallback
+                     }
+                     return (
                      <div key={p.id} className="bg-slate-800/50 p-4 rounded-xl flex justify-between items-start border border-slate-700 hover:border-emerald-500/50 transition">
                         <div className="flex gap-4">
-                           {p.image_url ? (
-                             <img src={getImageUrl(p.image_url)} alt="Project" className="w-20 h-14 rounded object-cover" />
+                           {firstImage ? (
+                             <img src={getImageUrl(firstImage)} alt="Project" className="w-20 h-14 rounded object-cover" />
                            ) : (
                              <div className="w-20 h-14 rounded bg-slate-700 flex items-center justify-center text-xs">N/A</div>
                            )}
@@ -602,11 +628,12 @@ function AdminDashboard() {
                            </div>
                         </div>
                         <div className="flex space-x-2 mt-2">
-                          <button onClick={() => { setProjectData(p); setShowAddProject(true); }} className="text-blue-400 bg-blue-500/10 px-3 py-1 rounded">Edit</button>
-                          <button onClick={() => {if(window.confirm('Delete project?')) axios.delete(`http://localhost:5000/api/projects/${p.id}`).then(fetchProjects)}} className="bg-red-500/10 text-red-400 px-3 py-1 rounded">Delete</button>
+                          <button onClick={() => { setProjectData(p); setShowAddProject(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
+                          <button onClick={() => {if(window.confirm('Delete project?')) axios.delete(`http://localhost:5000/api/projects/${p.id}`).then(fetchProjects)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                         </div>
                      </div>
-                   ))}
+                   );
+                   })}
                  </div>
               </div>
             </div>

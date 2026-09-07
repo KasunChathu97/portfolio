@@ -43,34 +43,36 @@ app.get('/', (req, res) => {
 // PROJECTS APIs
 // ==========================================
 app.get('/api/projects', (req, res) => {
-    const sql = "SELECT * FROM projects ORDER BY created_at DESC";
+    const sql = "SELECT * FROM projects ORDER BY id DESC";
     db.query(sql, (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(result);
     });
 });
 
-app.post('/api/projects', upload.single('image'), (req, res) => {
-    const { title, description, tech_stack, project_link } = req.body;
-    let image_url = req.body.image_url; 
-    if (req.file) {
-        image_url = `/uploads/${req.file.filename}`;
+app.post('/api/projects', upload.array('project_images', 4), (req, res) => {
+    const { title, description, tech_stack, github_link, live_link, project_type } = req.body;
+    let image_urls = req.body.image_urls || '[]'; 
+    if (req.files && req.files.length > 0) {
+        const paths = req.files.map(file => `/uploads/${file.filename}`);
+        image_urls = JSON.stringify(paths);
     }
-    const sql = "INSERT INTO projects (title, description, tech_stack, image_url, project_link) VALUES (?, ?, ?, ?, ?)";
-    db.query(sql, [title, description, tech_stack, image_url, project_link], (err, result) => {
+    const sql = "INSERT INTO projects (title, description, tech_stack, image_urls, github_link, live_link, project_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.query(sql, [title, description, tech_stack, image_urls, github_link, live_link || null, project_type || 'Solo'], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: "Project added!", id: result.insertId });
     });
 });
 
-app.put('/api/projects/:id', upload.single('image'), (req, res) => {
-    const { title, description, tech_stack, project_link } = req.body;
-    let image_url = req.body.image_url; 
-    if (req.file) {
-        image_url = `/uploads/${req.file.filename}`;
+app.put('/api/projects/:id', upload.array('project_images', 4), (req, res) => {
+    const { title, description, tech_stack, github_link, live_link, project_type } = req.body;
+    let image_urls = req.body.image_urls; 
+    if (req.files && req.files.length > 0) {
+        const paths = req.files.map(file => `/uploads/${file.filename}`);
+        image_urls = JSON.stringify(paths);
     }
-    const sql = "UPDATE projects SET title=?, description=?, tech_stack=?, image_url=?, project_link=? WHERE id=?";
-    db.query(sql, [title, description, tech_stack, image_url, project_link, req.params.id], (err, result) => {
+    const sql = "UPDATE projects SET title=?, description=?, tech_stack=?, image_urls=?, github_link=?, live_link=?, project_type=? WHERE id=?";
+    db.query(sql, [title, description, tech_stack, image_urls, github_link, live_link || null, project_type || 'Solo', req.params.id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: "Project updated!" });
     });

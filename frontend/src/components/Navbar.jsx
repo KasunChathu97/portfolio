@@ -28,7 +28,7 @@ function Navbar() {
     <nav className="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 text-white transition-all">
       <div className="container mx-auto px-4 max-w-7xl h-20 flex justify-between items-center">
         <a href="/" onClick={handleScrollToTop} className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 cursor-pointer outline-none">
-          Kasun.dev
+          Kasun Chathuranga
         </a>
         <div className="space-x-8 hidden md:flex items-center font-medium">
           <a href="#experience" onClick={(e) => handleAnchorClick(e, 'experience')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Experience</a>

@@ -70,6 +70,7 @@ function Home() {
   const [educations, setEducations] = useState([]);
   const [contactData, setContactData] = useState({ sender_name: '', sender_email: '', message: '' });
   const [status, setStatus] = useState('');
+  const [projectFilter, setProjectFilter] = useState('All');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCertImage, setSelectedCertImage] = useState(null);
@@ -106,6 +107,13 @@ function Home() {
   const softSkills = skills.filter(s => s.main_category === 'Soft Skills').sort((a, b) => (b.proficiency_percentage || 0) - (a.proficiency_percentage || 0));
   const languageSkills = skills.filter(s => s.main_category === 'Languages');
   const techSkills = skills.filter(s => s.main_category === 'Technical Skills');
+
+  const filteredProjects = projects.filter(p => {
+    if (projectFilter === 'All') return true;
+    if (projectFilter === 'Solo Projects') return p.project_type === 'Solo' || !p.project_type;
+    if (projectFilter === 'Group Projects') return p.project_type === 'Group';
+    return true;
+  });
 
   
   const techSkillsGrouped = techSkills.reduce((acc, skill) => {
@@ -412,18 +420,35 @@ function Home() {
       {/* Projects Section */}
       <div id="projects" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Projects</span></h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full mb-8"></div>
+            
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap justify-center gap-3">
+              {['All', 'Solo Projects', 'Group Projects'].map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setProjectFilter(filter)}
+                  className={`px-6 py-2 rounded-full font-bold transition-all duration-300 text-sm ${
+                    projectFilter === filter 
+                    ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.length > 0 ? (
-              projects.map(project => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-500">
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map(project => (
                 <ProjectCard key={project.id} project={project} />
               ))
             ) : (
-              <p className="text-center text-slate-400 col-span-full text-lg">No projects published yet.</p>
+              <p className="text-center text-slate-400 col-span-full text-lg mt-8">No {projectFilter !== 'All' ? projectFilter.toLowerCase() : 'projects'} found.</p>
             )}
           </div>
         </div>
