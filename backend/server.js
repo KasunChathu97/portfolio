@@ -12,6 +12,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Initialize Database Tables
+const initDb = () => {
+    const createMessagesTable = `
+        CREATE TABLE IF NOT EXISTS messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            subject VARCHAR(200) NOT NULL,
+            message_body TEXT NOT NULL,
+            is_read BOOLEAN DEFAULT false,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    db.query(createMessagesTable, (err) => {
+        if (err) console.error("Failed to initialize messages table:", err.message);
+    });
+};
+initDb();
+
 // Create uploads folder if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -227,13 +246,13 @@ app.get('/api/profile', (req, res) => {
 });
 
 app.put('/api/profile', upload.single('image'), (req, res) => {
-    const { full_name, title, bio, email, github_link, linkedin_link, phone, address } = req.body;
+    const { full_name, title, bio, email, github_link, linkedin_link, phone, address, whatsapp } = req.body;
     let profile_image_url = req.body.profile_image_url;
     if (req.file) {
         profile_image_url = `/uploads/${req.file.filename}`;
     }
-    const sql = "UPDATE profile SET full_name=?, title=?, bio=?, profile_image_url=?, email=?, github_link=?, linkedin_link=?, phone=?, address=? WHERE id=1";
-    db.query(sql, [full_name, title, bio, profile_image_url, email, github_link, linkedin_link, phone, address], (err, result) => {
+    const sql = "UPDATE profile SET full_name=?, title=?, bio=?, profile_image_url=?, email=?, github_link=?, linkedin_link=?, phone=?, address=?, whatsapp=? WHERE id=1";
+    db.query(sql, [full_name, title, bio, profile_image_url, email, github_link, linkedin_link, phone, address, whatsapp], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: "Profile updated successfully!" });
     });
@@ -328,6 +347,45 @@ app.delete('/api/certifications/:id', (req, res) => {
         res.json({ message: "Certification deleted!" });
     });
 });
+// ==========================================
+// MESSAGES APIs
+// ==========================================
+app.get('/api/messages', (req, res) => {
+    const sql = "SELECT * FROM messages ORDER BY created_at DESC";
+    db.query(sql, (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(result);
+    });
+});
+
+app.post('/api/messages', (req, res) => {
+    const { name, email, subject, message_body } = req.body;
+    const sql = "INSERT INTO messages (name, email, subject, message_body) VALUES (?, ?, ?, ?)";
+    db.query(sql, [name, email, subject, message_body], (err, result) => {
+        if (err) {
+            console.error("MySQL Insert Error (Messages):", err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ message: "Message sent successfully!", id: result.insertId });
+    });
+});
+
+app.patch('/api/messages/:id/read', (req, res) => {
+    const sql = "UPDATE messages SET is_read = true WHERE id = ?";
+    db.query(sql, [req.params.id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Message marked as read!" });
+    });
+});
+
+app.delete('/api/messages/:id', (req, res) => {
+    const sql = "DELETE FROM messages WHERE id = ?";
+    db.query(sql, [req.params.id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Message deleted!" });
+    });
+});
+
 
 // ==========================================
 // SERVER LISTEN

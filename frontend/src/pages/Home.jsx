@@ -68,9 +68,10 @@ function Home() {
   const [projects, setProjects] = useState([]);
   const [experiences, setExperiences] = useState([]);
   const [educations, setEducations] = useState([]);
-  const [contactData, setContactData] = useState({ sender_name: '', sender_email: '', message: '' });
+  const [contactData, setContactData] = useState({ name: '', email: '', subject: '', message_body: '' });
   const [status, setStatus] = useState('');
   const [projectFilter, setProjectFilter] = useState('All');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCertImage, setSelectedCertImage] = useState(null);
@@ -89,14 +90,21 @@ function Home() {
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setStatus('Sending...');
-    axios.post('http://localhost:5000/api/messages', contactData)
+    axios.post('http://localhost:5000/api/messages', contactData, {
+      headers: { "Content-Type": "application/json" }
+    })
       .then(() => {
         setStatus('Message sent successfully!');
-        setContactData({ sender_name: '', sender_email: '', message: '' });
-        setTimeout(() => setStatus(''), 3000);
+        setContactData({ name: '', email: '', subject: '', message_body: '' });
+        setTimeout(() => setStatus(''), 5000);
       })
-      .catch(() => setStatus('Error sending message.'));
+      .catch((error) => {
+        console.error("Frontend Form Submit Error:", error.response?.data || error.message);
+        setStatus('Error sending message.');
+      })
+      .finally(() => setIsSubmitting(false));
   };
 
   const getImageUrl = (url) => {
@@ -471,48 +479,71 @@ function Home() {
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 md:p-10 rounded-3xl shadow-2xl flex flex-col justify-center">
               <h3 className="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-4">Contact Info</h3>
               
-              <div className="space-y-8">
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl flex-shrink-0">📞</div>
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">Phone</p>
-                    <p className="text-white font-medium text-lg">{profile.phone || '+94-762251786'}</p>
-                  </div>
-                </div>
+              <div className="space-y-3">
                 
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-2xl flex-shrink-0">📍</div>
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">Address</p>
-                    <p className="text-white font-medium text-lg">{profile.address || 'Pallegama, Kolawenigama, Deniyaya'}</p>
+                {/* WhatsApp */}
+                <a href={`https://wa.me/${(profile.whatsapp || profile.phone || '+94762251786').replace(/[-+]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-[#25D366] group-hover:text-white transition-all duration-300 shadow-lg shadow-transparent group-hover:shadow-[#25D366]/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl flex-shrink-0">📧</div>
                   <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">Email</p>
-                    <p className="text-white font-medium text-lg">{profile.email || 'kasundeni1997@gmail.com'}</p>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">WhatsApp</p>
+                    <p className="text-slate-200 group-hover:text-emerald-400 font-medium transition-colors">{profile.whatsapp || profile.phone || '+94-762251786'}</p>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center text-2xl flex-shrink-0">🔗</div>
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">LinkedIn</p>
-                    <a href={profile.linkedin_link || '#'} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 font-medium text-lg break-all">
-                      {profile.linkedin_link || 'linkedin.com/in/kasunchathuranga-43a743321/'}
-                    </a>
-                  </div>
-                </div>
+                </a>
 
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 bg-slate-500/20 text-slate-300 rounded-full flex items-center justify-center text-2xl flex-shrink-0">💻</div>
+                {/* Direct Call */}
+                <a href={`tel:${profile.phone || '+94-762251786'}`} className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-cyan-500/20 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </div>
                   <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">GitHub</p>
-                    <a href={profile.github_link || '#'} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 font-medium text-lg break-all">
-                      {profile.github_link || 'https://github.com/KasunChathu97'}
-                    </a>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">Direct Call</p>
+                    <p className="text-slate-200 group-hover:text-cyan-400 font-medium transition-colors">{profile.phone || '+94-762251786'}</p>
+                  </div>
+                </a>
+                
+                {/* Email */}
+                <a href={`mailto:${profile.email || 'kasundeni1997@gmail.com'}`} className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">Email</p>
+                    <p className="text-slate-200 group-hover:text-blue-400 font-medium transition-colors">{profile.email || 'kasundeni1997@gmail.com'}</p>
+                  </div>
+                </a>
+
+                {/* LinkedIn */}
+                <a href={profile.linkedin_link || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">LinkedIn</p>
+                    <p className="text-slate-200 group-hover:text-indigo-400 font-medium transition-colors truncate max-w-[200px] sm:max-w-xs">{profile.linkedin_link || 'linkedin.com/in/kasunchathuranga-43a743321/'}</p>
+                  </div>
+                </a>
+
+                {/* GitHub */}
+                <a href={profile.github_link || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-slate-500/10 text-slate-300 border border-slate-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-slate-500/20 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">GitHub</p>
+                    <p className="text-slate-200 group-hover:text-slate-100 font-medium transition-colors truncate max-w-[200px] sm:max-w-xs">{profile.github_link || 'github.com/KasunChathu97'}</p>
+                  </div>
+                </a>
+
+                {/* Location */}
+                <div className="flex items-center gap-4 group p-3 rounded-2xl hover:bg-white/5 transition-all duration-300">
+                  <div className="w-12 h-12 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-rose-500/20 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">Location</p>
+                    <p className="text-slate-200 font-medium">{profile.address || 'Pallegama, Kolawenigama, Deniyaya'}</p>
                   </div>
                 </div>
               </div>
@@ -525,27 +556,37 @@ function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
-                    <input type="text" name="sender_name" value={contactData.sender_name} onChange={handleContactChange} required
-                      className="w-full bg-slate-900/80 border border-slate-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" placeholder="Your Name" />
+                    <input type="text" name="name" value={contactData.name} onChange={handleContactChange} required
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition" placeholder="Your Name" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                    <input type="email" name="sender_email" value={contactData.sender_email} onChange={handleContactChange} required
-                      className="w-full bg-slate-900/80 border border-slate-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" placeholder="you@email.com" />
+                    <input type="email" name="email" value={contactData.email} onChange={handleContactChange} required
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition" placeholder="you@email.com" />
                   </div>
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Subject</label>
+                  <input type="text" name="subject" value={contactData.subject} onChange={handleContactChange} required
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition" placeholder="What is this about?" />
+                </div>
+                
+                <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Message</label>
-                  <textarea name="message" value={contactData.message} onChange={handleContactChange} required rows="5"
-                    className="w-full bg-slate-900/80 border border-slate-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition resize-none" placeholder="Your message here..."></textarea>
+                  <textarea name="message_body" value={contactData.message_body} onChange={handleContactChange} required rows="4"
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-none" placeholder="Your message here..."></textarea>
                 </div>
 
-                <button type="submit" className="w-full py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold rounded-xl text-lg hover:from-emerald-400 hover:to-cyan-400 transition shadow-lg shadow-emerald-500/25">
-                  Send Message
+                <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold rounded-xl text-lg hover:from-emerald-400 hover:to-cyan-400 transition shadow-lg shadow-emerald-500/25 disabled:opacity-70 disabled:cursor-not-allowed">
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </button>
                 
-                {status && <p className="text-center text-emerald-400 font-medium mt-4">{status}</p>}
+                {status && (
+                  <div className={`p-4 rounded-xl text-center font-medium ${status.includes('Error') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                    {status}
+                  </div>
+                )}
               </form>
             </div>
 

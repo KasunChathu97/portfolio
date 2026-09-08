@@ -7,7 +7,7 @@ function AdminDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Profile State
-  const [profileData, setProfileData] = useState({ full_name: '', title: '', bio: '', profile_image_url: '', email: '', github_link: '', linkedin_link: '', phone: '', address: '' });
+  const [profileData, setProfileData] = useState({ full_name: '', title: '', bio: '', profile_image_url: '', email: '', github_link: '', linkedin_link: '', phone: '', address: '', whatsapp: '' });
   const [profileImage, setProfileImage] = useState(null);
 
   // Experience State
@@ -35,6 +35,9 @@ function AdminDashboard() {
   const [skillData, setSkillData] = useState({ id: null, name: '', main_category: 'Technical Skills', sub_category: '', proficiency_text: '', proficiency_percentage: '', skill_logo_url: '' });
   const [skillImage, setSkillImage] = useState(null);
   const [skillFilter, setSkillFilter] = useState('All');
+
+  // Messages State
+  const [messages, setMessages] = useState([]);
 
   const navigate = useNavigate();
 
@@ -64,6 +67,7 @@ function AdminDashboard() {
     fetchProjects();
     fetchCertifications();
     fetchSkills();
+    fetchMessages();
   };
 
   const fetchProfile = () => axios.get('http://localhost:5000/api/profile').then(res => setProfileData(res.data)).catch(console.error);
@@ -72,6 +76,7 @@ function AdminDashboard() {
   const fetchProjects = () => axios.get('http://localhost:5000/api/projects').then(res => setProjects(res.data)).catch(console.error);
   const fetchCertifications = () => axios.get('http://localhost:5000/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
   const fetchSkills = () => axios.get('http://localhost:5000/api/skills').then(res => setSkills(res.data)).catch(console.error);
+  const fetchMessages = () => axios.get('http://localhost:5000/api/messages').then(res => setMessages(res.data)).catch(console.error);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -208,6 +213,7 @@ function AdminDashboard() {
     { id: 'certifications', label: 'Certifications', icon: '📜' },
     { id: 'skills', label: 'Skills', icon: '⭐' },
     { id: 'projects', label: 'Projects', icon: '🚀' },
+    { id: 'messages', label: 'Inbox', icon: '✉️' },
     { id: 'contact', label: 'Contact', icon: '📞' }
   ];
 
@@ -362,10 +368,14 @@ function AdminDashboard() {
                 /* READ-ONLY VIEW */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-xl">
-                    <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Phone Number</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Direct Call Number</p>
                     <p className="font-medium text-white text-lg">{profileData.phone || 'N/A'}</p>
                   </div>
                   <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-xl">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">WhatsApp Number</p>
+                    <p className="font-medium text-white text-lg">{profileData.whatsapp || 'N/A'}</p>
+                  </div>
+                  <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-xl md:col-span-2">
                     <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Email Address</p>
                     <p className="font-medium text-white text-lg">{profileData.email || 'N/A'}</p>
                   </div>
@@ -387,10 +397,14 @@ function AdminDashboard() {
                 <form onSubmit={handleContactSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm text-slate-400 mb-1">Phone</label>
-                      <input type="text" value={profileData.phone || ''} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl focus:border-emerald-500" />
+                      <label className="block text-sm text-slate-400 mb-1">Direct Call Number</label>
+                      <input type="text" value={profileData.phone || ''} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl focus:border-emerald-500" placeholder="+94-762251786" />
                     </div>
                     <div>
+                      <label className="block text-sm text-slate-400 mb-1">WhatsApp Number</label>
+                      <input type="text" value={profileData.whatsapp || ''} onChange={e => setProfileData({...profileData, whatsapp: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl focus:border-emerald-500" placeholder="+94-762251786" />
+                    </div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm text-slate-400 mb-1">Email</label>
                       <input type="email" value={profileData.email || ''} onChange={e => setProfileData({...profileData, email: e.target.value})} className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl focus:border-emerald-500" />
                     </div>
@@ -802,6 +816,81 @@ function AdminDashboard() {
                   ))}
                   {(skillFilter === 'All' ? skills : skills.filter(s => s.main_category === skillFilter)).length === 0 && <p className="text-slate-400 text-center py-10">No skills found.</p>}
                 </div>
+              </div>
+            </div>
+          )}
+
+
+          {/* MESSAGES TAB */}
+          {activeTab === 'messages' && (
+            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl flex flex-col h-[calc(100vh-120px)]">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <span className="text-emerald-400">✉️</span> Inbox
+                </h2>
+                <span className="text-sm bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold">
+                  {messages.filter(m => !m.is_read).length} Unread
+                </span>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                {messages.length > 0 ? (
+                  messages.map(msg => (
+                    <div key={msg.id} className={`p-5 rounded-xl border transition-all duration-300 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between ${
+                      msg.is_read ? 'bg-slate-800/30 border-white/5 opacity-70' : 'bg-slate-800/80 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                    }`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className={`text-lg truncate ${msg.is_read ? 'text-slate-300 font-medium' : 'text-white font-bold'}`}>
+                            {msg.name}
+                          </h3>
+                          {!msg.is_read && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></span>}
+                        </div>
+                        <p className="text-sm text-emerald-400 mb-2 truncate"><a href={`mailto:${msg.email}`}>{msg.email}</a></p>
+                        <p className={`text-md mb-2 truncate ${msg.is_read ? 'text-slate-400' : 'text-slate-200 font-semibold'}`}>
+                          <span className="text-slate-500 mr-2">Subject:</span>{msg.subject}
+                        </p>
+                        <p className="text-sm text-slate-400 whitespace-pre-wrap mt-2 bg-black/20 p-3 rounded-lg border border-white/5">
+                          {msg.message_body}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-3">
+                          {new Date(msg.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex md:flex-col gap-2 w-full md:w-auto shrink-0 mt-4 md:mt-0">
+                        {!msg.is_read && (
+                          <button 
+                            onClick={() => {
+                              axios.patch(`http://localhost:5000/api/messages/${msg.id}/read`)
+                                .then(() => fetchMessages())
+                                .catch(console.error);
+                            }}
+                            className="flex-1 md:flex-none text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 rounded-lg font-semibold transition"
+                          >
+                            Mark Read
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            if(window.confirm('Are you sure you want to delete this message?')) {
+                              axios.delete(`http://localhost:5000/api/messages/${msg.id}`)
+                                .then(() => fetchMessages())
+                                .catch(console.error);
+                            }
+                          }}
+                          className="flex-1 md:flex-none text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-4 py-2 rounded-lg font-semibold transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+                    <span className="text-4xl mb-3">📭</span>
+                    <p>No messages in your inbox.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
