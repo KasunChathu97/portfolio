@@ -198,25 +198,7 @@ app.delete('/api/education/:id', (req, res) => {
         res.json({ message: "Education deleted!" });
     });
 });
-// ==========================================
-// MESSAGES APIs
-// ==========================================
-app.post('/api/messages', (req, res) => {
-    const { sender_name, sender_email, message } = req.body;
-    const sql = "INSERT INTO messages (sender_name, sender_email, message) VALUES (?, ?, ?)";
-    db.query(sql, [sender_name, sender_email, message], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Message sent!" });
-    });
-});
 
-app.get('/api/messages', (req, res) => {
-    const sql = "SELECT * FROM messages ORDER BY created_at DESC";
-    db.query(sql, (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(result);
-    });
-});
 
 // ==========================================
 // AUTHENTICATION (LOGIN) API

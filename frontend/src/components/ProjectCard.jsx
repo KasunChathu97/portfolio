@@ -13,7 +13,7 @@ function ProjectCard({ project }) {
   } catch(e) {
     if (project.image_urls) images = [project.image_urls];
   }
-  if (images.length === 0) images = ['https://via.placeholder.com/600x400'];
+  if (images.length === 0) images = ['https://placehold.co/600x400/1e293b/94a3b8?text=Project+Image'];
 
   // Hover Slideshow State
   const [isHovered, setIsHovered] = useState(false);
@@ -46,7 +46,11 @@ function ProjectCard({ project }) {
               key={idx}
               src={src} 
               alt={`${project.title} - ${idx}`} 
-              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-500 ${idx === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} 
+              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-500 ${idx === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              onError={(e) => {
+                e.target.onerror = null; 
+                e.target.src = 'https://placehold.co/600x400/1e293b/94a3b8?text=No+Image';
+              }}
             />
           );
         })}
