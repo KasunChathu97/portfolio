@@ -37,9 +37,6 @@ function Navbar() {
           <a href="#skills" onClick={(e) => handleAnchorClick(e, 'skills')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Skills</a>
           <a href="#projects" onClick={(e) => handleAnchorClick(e, 'projects')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Projects</a>
           <a href="#contact" onClick={(e) => handleAnchorClick(e, 'contact')} className="hover:text-emerald-400 transition-colors cursor-pointer text-sm tracking-wide">Contact</a>
-          <Link to="/admin" className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all hover:-translate-y-0.5">
-            Admin Panel
-          </Link>
         </div>
       </div>
     </nav>

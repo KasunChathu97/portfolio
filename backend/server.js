@@ -28,6 +28,30 @@ const initDb = () => {
     db.query(createMessagesTable, (err) => {
         if (err) console.error("Failed to initialize messages table:", err.message);
     });
+
+    const createSettingsTable = `
+        CREATE TABLE IF NOT EXISTS site_settings (
+            id INT PRIMARY KEY,
+            tagline TEXT,
+            facebook_url VARCHAR(255),
+            linkedin_url VARCHAR(255),
+            github_url VARCHAR(255),
+            whatsapp_url VARCHAR(255),
+            fiverr_url VARCHAR(255)
+        )
+    `;
+    db.query(createSettingsTable, (err) => {
+        if (err) console.error("Failed to initialize site_settings table:", err.message);
+        else {
+            const seedSettings = `
+                INSERT IGNORE INTO site_settings (id, tagline, facebook_url, linkedin_url, github_url, whatsapp_url, fiverr_url) 
+                VALUES (1, 'Building modern digital experiences with passion and precision.', '', '', '', '', '')
+            `;
+            db.query(seedSettings, (err) => {
+                if (err) console.error("Failed to seed site_settings:", err.message);
+            });
+        }
+    });
 };
 initDb();
 
@@ -368,6 +392,30 @@ app.delete('/api/messages/:id', (req, res) => {
     });
 });
 
+
+// ==========================================
+// SITE SETTINGS APIs
+// ==========================================
+app.get('/api/settings', (req, res) => {
+    const sql = "SELECT * FROM site_settings WHERE id = 1";
+    db.query(sql, (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(result[0] || {});
+    });
+});
+
+app.put('/api/settings', (req, res) => {
+    const { tagline, facebook_url, linkedin_url, github_url, whatsapp_url, fiverr_url } = req.body;
+    const sql = `
+        UPDATE site_settings 
+        SET tagline=?, facebook_url=?, linkedin_url=?, github_url=?, whatsapp_url=?, fiverr_url=? 
+        WHERE id=1
+    `;
+    db.query(sql, [tagline, facebook_url, linkedin_url, github_url, whatsapp_url, fiverr_url], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Settings updated successfully!" });
+    });
+});
 
 // ==========================================
 // SERVER LISTEN

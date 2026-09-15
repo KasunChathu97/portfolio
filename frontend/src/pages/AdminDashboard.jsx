@@ -40,6 +40,9 @@ function AdminDashboard() {
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
 
+  // Site Settings State
+  const [settingsData, setSettingsData] = useState({ tagline: '', facebook_url: '', linkedin_url: '', github_url: '', whatsapp_url: '', fiverr_url: '' });
+
   const navigate = useNavigate();
 
   const [showAddExperience, setShowAddExperience] = useState(false);
@@ -69,6 +72,7 @@ function AdminDashboard() {
     fetchCertifications();
     fetchSkills();
     fetchMessages();
+    fetchSettings();
   };
 
   const fetchProfile = () => axios.get('http://localhost:5000/api/profile').then(res => setProfileData(res.data)).catch(console.error);
@@ -78,6 +82,7 @@ function AdminDashboard() {
   const fetchCertifications = () => axios.get('http://localhost:5000/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
   const fetchSkills = () => axios.get('http://localhost:5000/api/skills').then(res => setSkills(res.data)).catch(console.error);
   const fetchMessages = () => axios.get('http://localhost:5000/api/messages').then(res => setMessages(res.data)).catch(console.error);
+  const fetchSettings = () => axios.get('http://localhost:5000/api/settings').then(res => setSettingsData(res.data)).catch(console.error);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -215,10 +220,18 @@ function AdminDashboard() {
     { id: 'skills', label: 'Skills', icon: '⭐' },
     { id: 'projects', label: 'Projects', icon: '🚀' },
     { id: 'contact', label: 'Contact', icon: '📞' },
-    { id: 'messages', label: 'Inbox', icon: '✉️' }
+    { id: 'messages', label: 'Inbox', icon: '✉️' },
+    { id: 'settings', label: 'Site Settings', icon: '⚙️' }
   ];
 
   const [isEditingContact, setIsEditingContact] = useState(false);
+
+  const handleSettingsSubmit = (e) => {
+    e.preventDefault();
+    axios.put('http://localhost:5000/api/settings', settingsData)
+      .then(() => alert('Site Settings updated successfully!'))
+      .catch(console.error);
+  };
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -945,10 +958,82 @@ function AdminDashboard() {
 
           {/* SETTINGS TAB */}
           {activeTab === 'settings' && (
-            <div className="bg-white/5 border border-white/10 p-8 rounded-2xl flex flex-col items-center justify-center text-center h-96">
-              <span className="text-6xl mb-4">⚙️</span>
-              <h2 className="text-2xl font-bold text-white mb-2">System Settings</h2>
-              <p className="text-slate-400 max-w-md">Global configuration, themes, and account settings will be available in future updates.</p>
+            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl flex flex-col min-h-[calc(100vh-120px)]">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2 mb-6">
+                <span className="text-emerald-400">⚙️</span> Site Settings
+              </h2>
+              
+              <form onSubmit={handleSettingsSubmit} className="space-y-6 max-w-3xl">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Footer Tagline</label>
+                  <textarea 
+                    value={settingsData.tagline} 
+                    onChange={e => setSettingsData({...settingsData, tagline: e.target.value})} 
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none" 
+                    rows="3"
+                    placeholder="E.g., Building modern digital experiences..."
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Facebook URL</label>
+                    <input 
+                      type="url" 
+                      value={settingsData.facebook_url} 
+                      onChange={e => setSettingsData({...settingsData, facebook_url: e.target.value})} 
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                      placeholder="https://facebook.com/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">LinkedIn URL</label>
+                    <input 
+                      type="url" 
+                      value={settingsData.linkedin_url} 
+                      onChange={e => setSettingsData({...settingsData, linkedin_url: e.target.value})} 
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">GitHub URL</label>
+                    <input 
+                      type="url" 
+                      value={settingsData.github_url} 
+                      onChange={e => setSettingsData({...settingsData, github_url: e.target.value})} 
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                      placeholder="https://github.com/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">WhatsApp URL</label>
+                    <input 
+                      type="url" 
+                      value={settingsData.whatsapp_url} 
+                      onChange={e => setSettingsData({...settingsData, whatsapp_url: e.target.value})} 
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                      placeholder="https://wa.me/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Fiverr URL</label>
+                    <input 
+                      type="url" 
+                      value={settingsData.fiverr_url} 
+                      onChange={e => setSettingsData({...settingsData, fiverr_url: e.target.value})} 
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                      placeholder="https://fiverr.com/..."
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                    Save Site Settings
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

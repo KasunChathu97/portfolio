@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { motion, useScroll, useTransform, animate } from 'framer-motion';
 import ProjectCard from '../components/ProjectCard';
+
+import AnimatedSection from '../components/AnimatedSection';
 
 const SoftSkillCard = ({ skill, index }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [currentCount, setCurrentCount] = useState(0);
   const targetCount = skill.proficiency_percentage || 0;
+  // Initialize to target count so it's fully readable by default
+  const [displayCount, setDisplayCount] = useState(targetCount);
 
   const colorClasses = [
     { text: 'text-cyan-400', border: 'border-cyan-500/10', hoverBorder: 'hover:border-cyan-500/30', shadow: 'drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]', cardShadow: 'hover:shadow-[0_10px_20px_-10px_rgba(6,182,212,0.3)]' },
@@ -16,28 +20,31 @@ const SoftSkillCard = ({ skill, index }) => {
   ];
   const color = colorClasses[index % colorClasses.length];
 
+  // Hover Number Interpolation
   useEffect(() => {
-    let interval;
+    let controls;
     if (isHovered) {
-      setCurrentCount(0);
-      interval = setInterval(() => {
-        setCurrentCount(prev => {
-          if (prev >= targetCount) {
-            clearInterval(interval);
-            return targetCount;
-          }
-          return prev + 1;
-        });
-      }, 10);
+      // Instantly reset to 0 internally, then animate up to target
+      controls = animate(0, targetCount, {
+        duration: 1.5,
+        ease: "easeOut",
+        onUpdate(value) {
+          setDisplayCount(Math.round(value));
+        }
+      });
     } else {
-      setCurrentCount(targetCount);
+      // Not hovered: instantly snap back to full target
+      setDisplayCount(targetCount);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (controls) controls.stop();
+    };
   }, [isHovered, targetCount]);
 
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (currentCount / 100) * circumference;
+  // Calculate target offset when fully filled to percentage
+  const targetOffset = circumference - (targetCount / 100) * circumference;
 
   return (
     <div 
@@ -47,14 +54,33 @@ const SoftSkillCard = ({ skill, index }) => {
     >
        <div className="relative w-24 h-24 flex items-center justify-center">
          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+           {/* Background Track Circle */}
            <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="6" className="text-slate-800" />
-           <circle 
+           
+           {/* Animated Foreground Circle */}
+           <motion.circle 
              cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="6" 
-             className={`${color.text} ${isHovered ? color.shadow : ''} transition-all duration-75 ease-out`} 
-             strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" 
+             className={`${color.text} ${isHovered ? color.shadow : ''} transition-shadow duration-300 ease-out`} 
+             strokeDasharray={circumference} 
+             initial={{ strokeDashoffset: targetOffset }}
+             animate={
+               isHovered 
+                 ? { strokeDashoffset: [circumference, targetOffset] } 
+                 : { strokeDashoffset: targetOffset }
+             }
+             transition={
+               isHovered 
+                 ? { duration: 1.5, ease: "easeOut" } 
+                 : { duration: 0 }
+             }
+             strokeLinecap="round" 
            />
          </svg>
-         <span className="absolute text-lg font-bold text-white">{currentCount}%</span>
+         
+         {/* Dynamic Centered Number */}
+         <span className="absolute text-lg font-bold text-white flex items-center justify-center w-full h-full pointer-events-none">
+           {displayCount}%
+         </span>
        </div>
        <span className="mt-4 text-slate-200 font-semibold text-center">{skill.name}</span>
     </div>
@@ -75,6 +101,29 @@ function Home() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCertImage, setSelectedCertImage] = useState(null);
+
+  // Spotlight Mouse Tracking (Global)
+  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 }); // Start off-screen
+
+  // Parallax Projects Background
+  const projectsRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: projectsRef,
+    offset: ["start end", "end start"]
+  });
+  const yTransform = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     // Fetch Data
@@ -134,51 +183,101 @@ function Home() {
   return (
     <div className="w-full font-sans pt-20">
       
+      {/* Global Mouse Spotlight */}
+      <div 
+        className="fixed top-0 left-0 w-[600px] h-[600px] bg-cyan-500/15 blur-[120px] rounded-full pointer-events-none z-0 transition-transform duration-75 ease-linear hidden md:block"
+        style={{
+          transform: `translate(${mousePosition.x - 300}px, ${mousePosition.y - 300}px)`,
+        }}
+      />
+      
       {/* Hero Section */}
-      <div id="home" className="scroll-mt-20 relative min-h-[80vh] flex items-center justify-center bg-slate-900 overflow-hidden py-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px]"></div>
+      <div 
+        id="home" 
+        className="scroll-mt-20 relative min-h-[80vh] flex items-center justify-center bg-transparent overflow-hidden py-20"
+      >
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] z-0 pointer-events-none"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px] z-0 pointer-events-none"></div>
         
         <div className="container mx-auto px-4 z-10 text-center flex flex-col items-center">
           
-          {/* Glowing Circular Avatar */}
-          <div className="w-40 h-40 rounded-full border-4 border-emerald-500 shadow-xl shadow-emerald-500/30 mb-8 flex items-center justify-center overflow-hidden bg-slate-800">
-            {profile.profile_image_url ? (
-              <img src={getImageUrl(profile.profile_image_url)} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white text-center text-sm px-2 font-medium">{profile.full_name}</span>
-            )}
-          </div>
+          {/* Animated Profile Image - Enlarged! */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <motion.div 
+              animate={{ y: [-10, 10] }}
+              transition={{ repeat: Infinity, repeatType: "reverse", duration: 3, ease: "easeInOut" }}
+              className="w-56 h-56 md:w-40 md:h-40 rounded-full border-4 border-emerald-500 shadow-2xl shadow-emerald-500/40 mb-8 flex items-center justify-center overflow-hidden bg-slate-800 relative z-10"
+            >
+              {profile.profile_image_url ? (
+                <img src={getImageUrl(profile.profile_image_url)} alt="Profile" className="w-full h-full object-cover pointer-events-none" />
+              ) : (
+                <span className="text-white text-center text-sm px-2 font-medium">{profile.full_name}</span>
+              )}
+            </motion.div>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            className="text-5xl md:text-7xl font-bold mb-4 text-white"
+          >
             Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">{profile.full_name}</span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-semibold text-emerald-400 mb-6">
+          </motion.h1>
+
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            className="text-2xl md:text-3xl font-semibold text-emerald-400 mb-6"
+          >
             {profile.title}
-          </h2>
-          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed whitespace-pre-wrap">
+          </motion.h2>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
+            className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed whitespace-pre-wrap"
+          >
             {profile.bio}
-          </p>
-          <div className="flex justify-center space-x-6">
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row justify-center items-center gap-6"
+          >
             <a href="#projects" className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-full text-lg hover:from-emerald-400 hover:to-emerald-500 transition shadow-lg shadow-emerald-500/30">
               View My Projects
             </a>
             <a href="#contact" className="px-8 py-3 border border-emerald-500/50 text-emerald-400 font-bold rounded-full text-lg hover:bg-emerald-500/10 transition">
               Contact Me
             </a>
-          </div>
+          </motion.div>
         </div>
       </div>
 
 
 
       {/* Working Experience Section */}
-      <div id="experience" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+      <AnimatedSection id="experience" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            viewport={{ once: true, amount: 0.15 }}
+            className="text-center mb-16"
+          >
             <h2 className="text-4xl font-bold text-white mb-4">Working <span className="text-cyan-400">Experience</span></h2>
             <div className="w-24 h-1 bg-gradient-to-r from-cyan-400 to-blue-400 mx-auto rounded-full"></div>
-          </div>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {experiences.length > 0 ? experiences.map(exp => {
@@ -224,10 +323,10 @@ function Home() {
             )}
           </div>
         </div>
-      </div>
+      </AnimatedSection>
 
       {/* Education Section */}
-      <div id="education" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+      <AnimatedSection id="education" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Education</span></h2>
@@ -284,11 +383,11 @@ function Home() {
             )}
           </div>
         </div>
-      </div>
+      </AnimatedSection>
 
       {/* Certifications Section */}
       {certifications.length > 0 && (
-        <div id="certifications" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+        <AnimatedSection id="certifications" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20">
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-cyan-400">Certifications</span></h2>
@@ -337,12 +436,12 @@ function Home() {
               })}
             </div>
           </div>
-        </div>
+        </AnimatedSection>
       )}
 
       {/* Skills Section */}
       {skills.length > 0 && (
-        <div id="skills" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+        <AnimatedSection id="skills" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20">
           <div className="container mx-auto px-4 max-w-7xl">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Skills</span></h2>
@@ -422,50 +521,75 @@ function Home() {
 
             </div>
           </div>
-        </div>
+        </AnimatedSection>
       )}
 
       {/* Projects Section */}
-      <div id="projects" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Projects</span></h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full mb-8"></div>
+      <AnimatedSection id="projects" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20 overflow-hidden">
+        
+        {/* Parallax Container */}
+        <div ref={projectsRef} className="relative w-full h-full">
+          
+          {/* Parallax Background Images */}
+          <motion.div 
+            className="absolute inset-0 z-0 pointer-events-none flex flex-wrap justify-around items-center opacity-[0.03] grayscale blur-md gap-8 p-10 min-h-[150%]"
+            style={{ y: yTransform }}
+          >
+            {projects.filter(p => p.image_url).map((p, i) => (
+              <img 
+                key={`bg-proj-${i}`} 
+                src={getImageUrl(p.image_url)} 
+                alt="" 
+                className="w-72 h-72 object-cover rounded-3xl"
+                style={{ 
+                  transform: `rotate(${i % 2 === 0 ? 15 : -15}deg) scale(${1 + (i % 3) * 0.15})`,
+                  margin: `${(i % 3) * 3}rem`
+                }}
+              />
+            ))}
+          </motion.div>
+
+          {/* Foreground Content */}
+          <div className="container mx-auto px-4 max-w-7xl relative z-10">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-white mb-4">My <span className="text-emerald-400">Projects</span></h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 mx-auto rounded-full mb-8"></div>
+              
+              {/* Filter Tabs */}
+              <div className="flex flex-wrap justify-center gap-3">
+                {['All', 'Solo Projects', 'Group Projects'].map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setProjectFilter(filter)}
+                    className={`px-6 py-2 rounded-full font-bold transition-all duration-300 text-sm ${
+                      projectFilter === filter 
+                      ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                      : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap justify-center gap-3">
-              {['All', 'Solo Projects', 'Group Projects'].map(filter => (
-                <button
-                  key={filter}
-                  onClick={() => setProjectFilter(filter)}
-                  className={`px-6 py-2 rounded-full font-bold transition-all duration-300 text-sm ${
-                    projectFilter === filter 
-                    ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
-                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/10'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-500">
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map(project => (
+                  <ProjectCard key={project.id} project={project} />
+                ))
+              ) : (
+                <p className="text-center text-slate-400 col-span-full text-lg mt-8">No {projectFilter !== 'All' ? projectFilter.toLowerCase() : 'projects'} found.</p>
+              )}
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-500">
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map(project => (
-                <ProjectCard key={project.id} project={project} />
-              ))
-            ) : (
-              <p className="text-center text-slate-400 col-span-full text-lg mt-8">No {projectFilter !== 'All' ? projectFilter.toLowerCase() : 'projects'} found.</p>
-            )}
-          </div>
         </div>
-      </div>
+      </AnimatedSection>
 
 
 
       {/* Contact Section (with Form and Contact Info side by side) */}
-      <div id="contact" className="scroll-mt-20 bg-slate-900 py-24 border-t border-white/5 relative z-20">
+      <AnimatedSection id="contact" className="scroll-mt-20 bg-transparent py-24 border-t border-white/5 relative z-20">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Get In <span className="text-emerald-400">Touch</span></h2>
@@ -592,7 +716,7 @@ function Home() {
 
           </div>
         </div>
-      </div>
+      </AnimatedSection>
 
       {/* Certifications Modal */}
       {isModalOpen && (
