@@ -40,7 +40,7 @@ function ProjectCard({ project }) {
         onMouseLeave={() => { setIsHovered(false); setCurrentImageIndex(0); }}
       >
         {images.map((img, idx) => {
-          const src = img.startsWith('http') ? img : `http://localhost:5000${img}`;
+          const src = img.startsWith('http') ? img : `https://portfolio-two-umber-q68w55xv3r.vercel.app${img}`;
           return (
             <img 
               key={idx}

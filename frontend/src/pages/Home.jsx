@@ -127,12 +127,12 @@ function Home() {
 
   useEffect(() => {
     // Fetch Data
-    axios.get('http://localhost:5000/api/profile').then(res => setProfile(res.data)).catch(console.error);
-    axios.get('http://localhost:5000/api/skills').then(res => setSkills(res.data)).catch(console.error);
-    axios.get('http://localhost:5000/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
-    axios.get('http://localhost:5000/api/projects').then(res => setProjects(res.data)).catch(console.error);
-    axios.get('http://localhost:5000/api/experience').then(res => setExperiences(res.data)).catch(console.error);
-    axios.get('http://localhost:5000/api/education').then(res => setEducations(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/profile').then(res => setProfile(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/skills').then(res => setSkills(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/projects').then(res => setProjects(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/experience').then(res => setExperiences(res.data)).catch(console.error);
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/education').then(res => setEducations(res.data)).catch(console.error);
   }, []);
 
   const handleContactChange = (e) => setContactData({ ...contactData, [e.target.name]: e.target.value });
@@ -141,7 +141,7 @@ function Home() {
     e.preventDefault();
     setIsSubmitting(true);
     setStatus('Sending...');
-    axios.post('http://localhost:5000/api/messages', contactData, {
+    axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/messages', contactData, {
       headers: { "Content-Type": "application/json" }
     })
       .then(() => {
@@ -158,7 +158,7 @@ function Home() {
 
   const getImageUrl = (url) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `http://localhost:5000${url}`;
+    return url.startsWith('http') ? url : `https://portfolio-two-umber-q68w55xv3r.vercel.app${url}`;
   };
 
   const softSkills = skills.filter(s => s.main_category === 'Soft Skills').sort((a, b) => (b.proficiency_percentage || 0) - (a.proficiency_percentage || 0));

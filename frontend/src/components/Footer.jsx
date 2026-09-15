@@ -7,7 +7,7 @@ function Footer() {
   const [settings, setSettings] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/settings')
+    axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/settings')
       .then(res => setSettings(res.data))
       .catch(console.error);
   }, []);
