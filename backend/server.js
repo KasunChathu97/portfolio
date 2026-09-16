@@ -49,6 +49,16 @@ const initDb = () => {
             `;
             db.query(seedSettings, (err) => {
                 if (err) console.error("Failed to seed site_settings:", err.message);
+                else {
+                    // Safely append visitor_count to existing setups
+                    const alterSettings = `ALTER TABLE site_settings ADD COLUMN visitor_count INT DEFAULT 0`;
+                    db.query(alterSettings, (alterErr) => {
+                        // Ignore error if column already exists (ER_DUP_FIELDNAME)
+                        if (alterErr && alterErr.code !== 'ER_DUP_FIELDNAME') {
+                            console.error("Failed to add visitor_count:", alterErr.message);
+                        }
+                    });
+                }
             });
         }
     });
@@ -404,6 +414,14 @@ app.get('/api/settings', (req, res) => {
     });
 });
 
+app.post('/api/settings/increment-visitor', (req, res) => {
+    const sql = "UPDATE site_settings SET visitor_count = visitor_count + 1 WHERE id = 1";
+    db.query(sql, (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Visitor count incremented!" });
+    });
+});
+
 app.put('/api/settings', (req, res) => {
     const { tagline, facebook_url, linkedin_url, github_url, whatsapp_url, fiverr_url } = req.body;
     const sql = `
@@ -424,5 +442,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-module.exports = app;

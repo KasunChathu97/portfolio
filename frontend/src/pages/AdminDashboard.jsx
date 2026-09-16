@@ -56,6 +56,17 @@ function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#messages') {
+        setActiveTab('messages');
+      }
+    };
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (!isAuthenticated) {
       navigate('/login');
@@ -75,14 +86,14 @@ function AdminDashboard() {
     fetchSettings();
   };
 
-  const fetchProfile = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/profile').then(res => setProfileData(res.data)).catch(console.error);
-  const fetchExperiences = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/experience').then(res => setExperiences(res.data)).catch(console.error);
-  const fetchEducations = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/education').then(res => setEducations(res.data)).catch(console.error);
-  const fetchProjects = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/projects').then(res => setProjects(res.data)).catch(console.error);
-  const fetchCertifications = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
-  const fetchSkills = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/skills').then(res => setSkills(res.data)).catch(console.error);
-  const fetchMessages = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/messages').then(res => setMessages(res.data)).catch(console.error);
-  const fetchSettings = () => axios.get('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/settings').then(res => setSettingsData(res.data)).catch(console.error);
+  const fetchProfile = () => axios.get('http://localhost:5000/api/profile').then(res => setProfileData(res.data)).catch(console.error);
+  const fetchExperiences = () => axios.get('http://localhost:5000/api/experience').then(res => setExperiences(res.data)).catch(console.error);
+  const fetchEducations = () => axios.get('http://localhost:5000/api/education').then(res => setEducations(res.data)).catch(console.error);
+  const fetchProjects = () => axios.get('http://localhost:5000/api/projects').then(res => setProjects(res.data)).catch(console.error);
+  const fetchCertifications = () => axios.get('http://localhost:5000/api/certifications').then(res => setCertifications(res.data)).catch(console.error);
+  const fetchSkills = () => axios.get('http://localhost:5000/api/skills').then(res => setSkills(res.data)).catch(console.error);
+  const fetchMessages = () => axios.get('http://localhost:5000/api/messages').then(res => setMessages(res.data)).catch(console.error);
+  const fetchSettings = () => axios.get('http://localhost:5000/api/settings').then(res => setSettingsData(res.data)).catch(console.error);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -91,7 +102,8 @@ function AdminDashboard() {
 
   const getImageUrl = (url) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `https://portfolio-two-umber-q68w55xv3r.vercel.app${url}`;
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return url.startsWith('http') ? url : `${baseUrl}${url}`;
   };
 
   // --- Handlers ---
@@ -111,7 +123,7 @@ function AdminDashboard() {
   const handleProfileSubmit = (e) => {
     e.preventDefault();
     const formData = createFormData(profileData, profileImage);
-    axios.put('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/profile', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    axios.put('http://localhost:5000/api/profile', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       .then(() => {
         alert('Profile updated successfully!');
         setProfileImage(null);
@@ -124,8 +136,8 @@ function AdminDashboard() {
     e.preventDefault();
     const formData = createFormData(expData, expImage);
     const req = expData.id 
-      ? axios.put(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/experience/${expData.id}`, formData)
-      : axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/experience', formData);
+      ? axios.put(`http://localhost:5000/api/experience/${expData.id}`, formData)
+      : axios.post('http://localhost:5000/api/experience', formData);
     
     req.then(() => {
       setExpData({ id: null, position: '', company_name: '', company_url: '', start_date: '', end_date: '', is_current: false, company_logo_url: '' });
@@ -138,8 +150,8 @@ function AdminDashboard() {
     e.preventDefault();
     const formData = createFormData(eduData, eduImage);
     const req = eduData.id 
-      ? axios.put(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/education/${eduData.id}`, formData)
-      : axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/education', formData);
+      ? axios.put(`http://localhost:5000/api/education/${eduData.id}`, formData)
+      : axios.post('http://localhost:5000/api/education', formData);
     
     req.then(() => {
       setEduData({ id: null, degree_course_name: '', institution_name: '', start_date: '', end_date: '', is_current: false, logo_url: '', institution_url: '', description: '' });
@@ -164,8 +176,8 @@ function AdminDashboard() {
     }
 
     const req = projectData.id 
-      ? axios.put(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/projects/${projectData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-      : axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/projects', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      ? axios.put(`http://localhost:5000/api/projects/${projectData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      : axios.post('http://localhost:5000/api/projects', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       
     req.then(() => {
         setProjectData({ id: null, title: '', description: '', tech_stack: '', image_urls: '[]', github_link: '', live_link: '', project_type: 'Solo' });
@@ -179,8 +191,8 @@ function AdminDashboard() {
     e.preventDefault();
     const formData = createFormData(certData, certImage);
     const req = certData.id 
-      ? axios.put(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/certifications/${certData.id}`, formData)
-      : axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/certifications', formData);
+      ? axios.put(`http://localhost:5000/api/certifications/${certData.id}`, formData)
+      : axios.post('http://localhost:5000/api/certifications', formData);
     
     req.then(() => {
       setCertData({ id: null, title: '', issuer: '', issue_date: '', certificate_image_url: '' });
@@ -201,8 +213,8 @@ function AdminDashboard() {
     if (skillImage) formData.append('image', skillImage);
 
     const req = skillData.id 
-      ? axios.put(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/skills/${skillData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-      : axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/skills', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      ? axios.put(`http://localhost:5000/api/skills/${skillData.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      : axios.post('http://localhost:5000/api/skills', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     
     req.then(() => {
       setSkillData({ id: null, name: '', main_category: 'Technical Skills', sub_category: '', proficiency_text: '', proficiency_percentage: '', skill_logo_url: '' });
@@ -228,7 +240,7 @@ function AdminDashboard() {
 
   const handleSettingsSubmit = (e) => {
     e.preventDefault();
-    axios.put('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/settings', settingsData)
+    axios.put('http://localhost:5000/api/settings', settingsData)
       .then(() => alert('Site Settings updated successfully!'))
       .catch(console.error);
   };
@@ -236,7 +248,7 @@ function AdminDashboard() {
   const handleContactSubmit = (e) => {
     e.preventDefault();
     const formData = createFormData(profileData, profileImage);
-    axios.put('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/profile', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    axios.put('http://localhost:5000/api/profile', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       .then(() => {
         alert('Contact updated successfully!');
         setIsEditingContact(false);
@@ -247,7 +259,7 @@ function AdminDashboard() {
   const handleMessageClick = (msg) => {
     setSelectedMessage(msg);
     if (!msg.is_read) {
-      axios.patch(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/messages/${msg.id}/read`)
+      axios.patch(`http://localhost:5000/api/messages/${msg.id}/read`)
         .then(() => {
           // Update local state to reflect read status instantly
           setMessages(messages.map(m => m.id === msg.id ? { ...m, is_read: 1 } : m));
@@ -261,14 +273,10 @@ function AdminDashboard() {
       
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-slate-900 border-r border-white/10 hidden md:flex flex-col">
-        <div className="p-6 border-b border-white/10">
-          <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-            Admin CMS
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Portfolio Manager v1.0</p>
+        <div className="p-6 border-b border-white/10 hidden">
         </div>
         
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-2 mt-2">
           {menuItems.map(item => (
             <button
               key={item.id}
@@ -296,8 +304,7 @@ function AdminDashboard() {
       <main className="flex-1 h-screen overflow-y-auto bg-[#0a192f]">
         
         {/* Mobile Header (Hidden on Desktop) */}
-        <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10 bg-slate-900">
-          <h1 className="text-xl font-bold text-emerald-400">Admin CMS</h1>
+        <div className="md:hidden flex justify-end items-center p-4 border-b border-white/10 bg-slate-900">
           <select 
             value={activeTab} 
             onChange={(e) => setActiveTab(e.target.value)}
@@ -522,7 +529,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex space-x-2">
                           <button onClick={() => { setExpData({ ...e, is_current: !!e.is_current }); setShowAddExperience(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
-                          <button onClick={() => {if(window.confirm('Delete experience?')) axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/experience/${e.id}`).then(fetchExperiences)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
+                          <button onClick={() => {if(window.confirm('Delete experience?')) axios.delete(`http://localhost:5000/api/experience/${e.id}`).then(fetchExperiences)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                         </div>
                      </div>
                    ))}
@@ -599,7 +606,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex space-x-2">
                           <button onClick={() => { setEduData({ ...edu, is_current: !!edu.is_current }); setShowAddEducation(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
-                          <button onClick={() => {if(window.confirm('Delete education?')) axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/education/${edu.id}`).then(fetchEducations)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
+                          <button onClick={() => {if(window.confirm('Delete education?')) axios.delete(`http://localhost:5000/api/education/${edu.id}`).then(fetchEducations)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                         </div>
                      </div>
                    ))}
@@ -669,7 +676,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex space-x-2 mt-2">
                           <button onClick={() => { setProjectData(p); setShowAddProject(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
-                          <button onClick={() => {if(window.confirm('Delete project?')) axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/projects/${p.id}`).then(fetchProjects)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
+                          <button onClick={() => {if(window.confirm('Delete project?')) axios.delete(`http://localhost:5000/api/projects/${p.id}`).then(fetchProjects)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                         </div>
                      </div>
                    );
@@ -729,7 +736,7 @@ function AdminDashboard() {
                       </div>
                       <div className="flex space-x-2">
                         <button onClick={() => { setCertData(c); setShowAddCertification(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
-                        <button onClick={() => {if(window.confirm('Delete cert?')) axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/certifications/${c.id}`).then(fetchCertifications)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
+                        <button onClick={() => {if(window.confirm('Delete cert?')) axios.delete(`http://localhost:5000/api/certifications/${c.id}`).then(fetchCertifications)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                       </div>
                     </div>
                   ))}
@@ -836,7 +843,7 @@ function AdminDashboard() {
                       </div>
                       <div className="flex space-x-2">
                         <button onClick={() => { setSkillData(s); setShowAddSkill(true); }} className="text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1 rounded font-semibold transition">Edit</button>
-                        <button onClick={() => {if(window.confirm('Delete skill?')) axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/skills/${s.id}`).then(fetchSkills)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
+                        <button onClick={() => {if(window.confirm('Delete skill?')) axios.delete(`http://localhost:5000/api/skills/${s.id}`).then(fetchSkills)}} className="text-red-400 hover:text-red-300 bg-red-500/10 px-3 py-1 rounded font-semibold transition">Delete</button>
                       </div>
                     </div>
                   ))}
@@ -930,7 +937,7 @@ function AdminDashboard() {
                       <button 
                         onClick={() => {
                           if(window.confirm('Are you sure you want to delete this message?')) {
-                            axios.delete(`https://portfolio-two-umber-q68w55xv3r.vercel.app/api/messages/${selectedMessage.id}`)
+                            axios.delete(`http://localhost:5000/api/messages/${selectedMessage.id}`)
                               .then(() => {
                                 setSelectedMessage(null);
                                 fetchMessages();

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -9,6 +10,27 @@ import Login from './pages/Login';
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Dynamic Favicon Logic
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/profile')
+      .then(res => {
+        if (res.data && res.data.profile_image_url) {
+          const faviconUrl = res.data.profile_image_url.startsWith('http') 
+            ? res.data.profile_image_url 
+            : `http://localhost:5000${res.data.profile_image_url}`;
+          
+          let link = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = faviconUrl;
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -29,7 +51,7 @@ function AppContent() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-white">
+    <div className="flex flex-col min-h-screen bg-white text-slate-900 dark:bg-slate-900 dark:text-white transition-colors duration-300">
       <Navbar />
       
       <main className="flex-grow">

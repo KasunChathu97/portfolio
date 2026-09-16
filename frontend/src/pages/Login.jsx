@@ -14,7 +14,7 @@ function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    axios.post('https://portfolio-two-umber-q68w55xv3r.vercel.app/api/login', credentials)
+    axios.post('http://localhost:5000/api/login', credentials)
       .then(res => {
         if (res.data.success) {
           // Login success nam browser eke mathakaya (localStorage) update karanawa
